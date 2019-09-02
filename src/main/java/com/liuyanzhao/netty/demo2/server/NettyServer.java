@@ -1,8 +1,9 @@
-package com.liuyanzhao.netty.demo.start;
+package com.liuyanzhao.netty.demo2.server;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
@@ -19,27 +20,31 @@ import io.netty.util.concurrent.GenericFutureListener;
  */
 
 public class NettyServer {
+
+    private static final Integer PORT = 8080;
+
     public static void main(String[] args) {
         ServerBootstrap serverBootstrap = new ServerBootstrap();
 
         NioEventLoopGroup boss = new NioEventLoopGroup();
         NioEventLoopGroup worker = new NioEventLoopGroup();
         serverBootstrap
+                // 1.指定线程模型
                 .group(boss, worker)
+                // 2.指定 IO 类型为 NIO
                 .channel(NioServerSocketChannel.class)
+                // 3.给channel设置属性
+                // 4.给所有连接设置属性
+                .option(ChannelOption.SO_BACKLOG, 1024)
+                .childOption(ChannelOption.SO_KEEPALIVE, true)
+                .childOption(ChannelOption.TCP_NODELAY, true)
                 .childHandler(new ChannelInitializer<NioSocketChannel>() {
                     @Override
                     protected void initChannel(NioSocketChannel ch) {
-                        ch.pipeline().addLast(new StringDecoder());
-                        ch.pipeline().addLast(new SimpleChannelInboundHandler<String>() {
-                            @Override
-                            protected void channelRead0(ChannelHandlerContext ctx, String msg) {
-                                System.out.println(msg);
-                            }
-                        });
+                        ch.pipeline().addLast(new FirstServerHandler());
                     }
                 });
-        bind(serverBootstrap, 8080);
+        bind(serverBootstrap, PORT);
     }
 
     private static void bind(final ServerBootstrap serverBootstrap, final int port) {

@@ -1,7 +1,8 @@
-package com.liuyanzhao.netty.demo.start;
+package com.liuyanzhao.netty.demo2.client;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
@@ -20,6 +21,11 @@ public class NettyClient {
 
     public static final Integer MAX_RETRY = 5;
 
+    private static final String HOST = "127.0.0.1";
+
+    private static final int PORT = 8080;
+
+
     public static void main(String[] args) {
         NioEventLoopGroup workerGroup = new NioEventLoopGroup();
 
@@ -29,14 +35,19 @@ public class NettyClient {
                 .group(workerGroup)
                 // 2.指定 IO 类型为 NIO
                 .channel(NioSocketChannel.class)
-                // 3.IO 处理逻辑
+                // 3.设置连接属性
+                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)
+                .option(ChannelOption.SO_KEEPALIVE, true)
+                .option(ChannelOption.TCP_NODELAY, true)
+                // 4.IO 处理逻辑
                 .handler(new ChannelInitializer<SocketChannel>() {
                     @Override
                     public void initChannel(SocketChannel ch) {
+                        ch.pipeline().addLast(new FirstClientHandler());
                     }
                 });
         // 4.建立连接
-        connect(bootstrap, "127.0.0.1", 8080, MAX_RETRY);
+        connect(bootstrap, HOST, PORT, MAX_RETRY);
     }
 
     private static void connect(Bootstrap bootstrap, String host, int port, int retry) {
